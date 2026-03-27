@@ -39,11 +39,11 @@
 ## 2. Execution Phases
 
 #### Phase 1: Design System & Layout Shells
-- [ ] **Step 1.1:** Initialize `shadcn/ui` and install the required components listed in the Tech Stack section.
-- [ ] **Step 1.2:** Create `src/components/layout/AdminSidebar.tsx` and `StudentSidebar.tsx` using the `shadcn` Sidebar components. Include links for Dashboard, Assignments/Quests, Grading (Admin only), and Settings.
-- [ ] **Step 1.3:** Create a Top Header component containing breadcrumbs and a `UserNav` (Avatar dropdown with "Profile" and "Log out" calling NextAuth `signOut`).
-- [ ] **Step 1.4:** Update `src/app/(admin)/layout.tsx` and `src/app/(student)/layout.tsx` to wrap their children in the new SidebarProvider, Sidebar, and Header structure.
-- [ ] **Verification:** Run `pnpm dev`. Log in as a TEACHER, verify the Admin Sidebar renders. Log out, log in as a STUDENT, verify the Student Sidebar renders.
+- [x] **Step 1.1:** Initialize `shadcn/ui` and install the required components listed in the Tech Stack section.
+- [x] **Step 1.2:** Create `src/components/layout/AdminSidebar.tsx` and `StudentSidebar.tsx` using the `shadcn` Sidebar components. Include links for Dashboard, Assignments/Quests, Grading (Admin only), and Settings.
+- [x] **Step 1.3:** Create a Top Header component containing breadcrumbs and a `UserNav` (Avatar dropdown with "Profile" and "Log out" calling NextAuth `signOut`).
+- [x] **Step 1.4:** Update `src/app/(admin)/layout.tsx` and `src/app/(student)/layout.tsx` to wrap their children in the new SidebarProvider, Sidebar, and Header structure.
+- [x] **Verification:** Run `pnpm dev`. Log in as a TEACHER, verify the Admin Sidebar renders. Log out, log in as a STUDENT, verify the Student Sidebar renders.
 
 #### Phase 2: Analytics Dashboards
 - [ ] **Step 2.1:** Overhaul `src/app/(student)/student/dashboard/page.tsx`. Use `shadcn` `<Card>` components to display: Total XP (sum of points from GRADED submissions), Completed Quests count, and a list of Pending Quests. Use `<Progress>` to show level progress.

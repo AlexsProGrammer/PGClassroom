@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## 0.7.0 - 2026-03-27
+
+- Initialized `shadcn/ui` design system (base-nova style, neutral color, CSS variables) with Tailwind CSS v4 integration.
+- Installed 20 shadcn components: sidebar, button, card, table, form, input, textarea, tabs, dialog, badge, separator, avatar, dropdown-menu, progress, scroll-area, label, radio-group, tooltip, sheet, breadcrumb, skeleton.
+- Added `lucide-react` icons, `@base-ui/react`, `class-variance-authority`, `tailwind-merge`, `tw-animate-css` dependencies.
+- Created `AdminSidebar` with navigation: Dashboard, Assignments, Grading, Students, Settings (uses `render` prop pattern for base-ui).
+- Created `StudentSidebar` with navigation: Dashboard, Quests, Leaderboard, Settings.
+- Created `UserNav` avatar dropdown in sidebar footer with Profile/Settings link and Log Out (calls NextAuth `signOut`).
+- Created `TopHeader` with collapsible sidebar trigger, separator, and dynamic breadcrumbs generated from URL pathname.
+- Created `AuthProvider` wrapper for next-auth `SessionProvider`.
+- Created `src/app/(admin)/layout.tsx` and `src/app/(student)/layout.tsx` with `SidebarProvider` → `Sidebar` + `SidebarInset` (Header + main content) structure.
+- Updated root layout with `TooltipProvider`, new metadata title/description.
+- Created placeholder `src/app/(student)/student/dashboard/page.tsx`.
+- Verified: Admin sidebar renders (Dashboard, Assignments, Grading, Students, Settings), Student sidebar renders (Dashboard, Quests, Leaderboard, Settings), breadcrumbs display correctly, `pnpm lint` passes clean.
+
 ## 0.6.0 - 2026-03-27
 
 - Added `userId` (optional FK to User) and `filePath` fields to `Submission` model with `@@unique([assignmentId, userId])` compound constraint.

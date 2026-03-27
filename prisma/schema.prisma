@@ -1,0 +1,33 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Assignment {
+  id              Int          @id @default(autoincrement())
+  title           String
+  description     String
+  language_id     Int
+  expected_output String
+  submissions     Submission[]
+}
+
+model Submission {
+  id              Int        @id @default(autoincrement())
+  assignmentId    Int
+  code            String
+  status          String
+  stdout          String?
+  stderr          String?
+  compile_output  String?
+  assignment      Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+}

@@ -1,0 +1,226 @@
+'use client'
+
+import { useEffect, useMemo, useState } from 'react'
+import { useParams } from 'next/navigation'
+import Editor from '@monaco-editor/react'
+
+type Assignment = {
+  id: number
+  title: string
+  description: string
+  language_id: number
+  expected_output: string
+}
+
+type ExecuteResponse = {
+  judge0_status?: string
+  stdout?: string | null
+  stderr?: string | null
+  compile_output?: string | null
+  error?: string
+}
+
+function mapLanguageIdToMonaco(languageId: number): string {
+  if (languageId === 71) return 'python'
+  if (languageId === 62) return 'java'
+  return 'plaintext'
+}
+
+function defaultCode(languageId: number): string {
+  if (languageId === 71) return 'print("Hello World")'
+  if (languageId === 62) {
+    return [
+      'public class Main {',
+      '  public static void main(String[] args) {',
+      '    System.out.println("Hello World");',
+      '  }',
+      '}',
+    ].join('\n')
+  }
+
+  return ''
+}
+
+export default function StudentQuestPage() {
+  const params = useParams<{ id: string }>()
+  const assignmentId = Number(params.id)
+
+  const [assignment, setAssignment] = useState<Assignment | null>(null)
+  const [code, setCode] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [isFetchingAssignment, setIsFetchingAssignment] = useState(true)
+  const [error, setError] = useState('')
+  const [result, setResult] = useState<ExecuteResponse | null>(null)
+
+  useEffect(() => {
+    async function loadAssignment() {
+      setIsFetchingAssignment(true)
+      setError('')
+
+      try {
+        const response = await fetch('/api/assignments')
+        if (!response.ok) {
+          throw new Error('Failed to load assignments')
+        }
+
+        const assignments: Assignment[] = await response.json()
+        const foundAssignment = assignments.find((item) => item.id === assignmentId)
+
+        if (!foundAssignment) {
+          setError('Assignment not found')
+          setAssignment(null)
+          return
+        }
+
+        setAssignment(foundAssignment)
+        setCode(defaultCode(foundAssignment.language_id))
+      } catch {
+        setError('Unable to load assignment')
+      } finally {
+        setIsFetchingAssignment(false)
+      }
+    }
+
+    if (!Number.isNaN(assignmentId)) {
+      loadAssignment()
+    } else {
+      setError('Invalid assignment id')
+      setIsFetchingAssignment(false)
+    }
+  }, [assignmentId])
+
+  const monacoLanguage = useMemo(() => {
+    if (!assignment) return 'plaintext'
+    return mapLanguageIdToMonaco(assignment.language_id)
+  }, [assignment])
+
+  async function runCode() {
+    if (!assignment) return
+
+    setIsLoading(true)
+    setError('')
+    setResult(null)
+
+    try {
+      const response = await fetch('/api/execute', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code,
+          assignmentId: assignment.id,
+        }),
+      })
+
+      const data: ExecuteResponse = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Execution failed')
+      }
+
+      setResult(data)
+    } catch (executionError) {
+      const message =
+        executionError instanceof Error ? executionError.message : 'Execution failed'
+      setError(message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-zinc-50 px-4 py-8 dark:bg-black">
+      <main className="mx-auto flex max-w-6xl flex-col gap-6">
+        <section className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
+          <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+            Student Workspace
+          </h1>
+          {isFetchingAssignment && (
+            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">Loading assignment...</p>
+          )}
+          {!isFetchingAssignment && assignment && (
+            <div className="mt-2 space-y-1">
+              <p className="text-sm text-zinc-600 dark:text-zinc-300">
+                Assignment #{assignment.id}
+              </p>
+              <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">
+                {assignment.title}
+              </h2>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                {assignment.description || 'No description provided.'}
+              </p>
+            </div>
+          )}
+          {error && !assignment && (
+            <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>
+          )}
+        </section>
+
+        <section className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+          <Editor
+            height="420px"
+            language={monacoLanguage}
+            value={code}
+            onChange={(value) => setCode(value ?? '')}
+            options={{
+              minimap: { enabled: false },
+              fontSize: 14,
+            }}
+          />
+
+          <div className="mt-4">
+            <button
+              onClick={runCode}
+              disabled={isLoading || !assignment}
+              className="inline-flex items-center rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
+            >
+              {isLoading ? 'Running...' : 'Run Code'}
+            </button>
+          </div>
+        </section>
+
+        <section className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
+          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Terminal / Output</h3>
+          {error && assignment && (
+            <pre className="mt-3 overflow-x-auto rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+              {error}
+            </pre>
+          )}
+          {!error && result && (
+            <div className="mt-3 space-y-3 text-sm">
+              <p className="text-zinc-700 dark:text-zinc-300">
+                Status: <span className="font-medium">{result.judge0_status || 'Unknown'}</span>
+              </p>
+              {result.compile_output && (
+                <div>
+                  <p className="mb-1 font-medium text-zinc-800 dark:text-zinc-200">Compiler Output</p>
+                  <pre className="overflow-x-auto rounded-md bg-red-50 p-3 text-zinc-800 dark:bg-red-950/30 dark:text-zinc-100">
+                    {result.compile_output}
+                  </pre>
+                </div>
+              )}
+              <div>
+                <p className="mb-1 font-medium text-zinc-800 dark:text-zinc-200">stdout</p>
+                <pre className="overflow-x-auto rounded-md bg-zinc-100 p-3 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
+                  {result.stdout || '(empty)'}
+                </pre>
+              </div>
+              <div>
+                <p className="mb-1 font-medium text-zinc-800 dark:text-zinc-200">stderr</p>
+                <pre className="overflow-x-auto rounded-md bg-zinc-100 p-3 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
+                  {result.stderr || '(empty)'}
+                </pre>
+              </div>
+            </div>
+          )}
+          {!error && !result && (
+            <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
+              Run your code to see output here.
+            </p>
+          )}
+        </section>
+      </main>
+    </div>
+  )
+}

@@ -41,11 +41,11 @@
 - [x] **Verification:** Start the app. Attempt to access `/admin/dashboard` unauthenticated and verify redirection to `/login`.
 
 #### Phase 2: Piston Queuing & Rate Limiting (Crucial for VM Stability)
-- [ ] **Step 2.1:** Update `docker-compose.yml` to include a `redis` container. Remove the public ports from the `piston` container so it is only internally accessible.
-- [ ] **Step 2.2:** In `src/lib/queue.ts`, initialize a `Queue` and a `Worker` using `bullmq` connected to Redis. The worker's `concurrency` must be explicitly set to `3`.
-- [ ] **Step 2.3:** Refactor `src/app/api/execute/route.ts`. Instead of calling Piston directly, add the code payload to the BullMQ queue (`queue.add(...)`). Return a `jobId` to the frontend.
-- [ ] **Step 2.4:** The Worker logic in `queue.ts` will pick up the job, make the internal HTTP call to Piston (`http://piston:2000`), and save the result to Prisma.
-- [ ] **Verification:** Send 10 concurrent requests to `/api/execute` via a test script. Verify that the VM CPU does not spike dangerously and the worker processes exactly 3 jobs at a time.
+- [x] **Step 2.1:** Update `docker-compose.yml` to include a `redis` container. Remove the public ports from the `piston` container so it is only internally accessible.
+- [x] **Step 2.2:** In `src/lib/queue.ts`, initialize a `Queue` and a `Worker` using `bullmq` connected to Redis. The worker's `concurrency` must be explicitly set to `3`.
+- [x] **Step 2.3:** Refactor `src/app/api/execute/route.ts`. Instead of calling Piston directly, add the code payload to the BullMQ queue (`queue.add(...)`). Return a `jobId` to the frontend.
+- [x] **Step 2.4:** The Worker logic in `queue.ts` will pick up the job, make the internal HTTP call to Piston (`http://piston:2000`), and save the result to Prisma.
+- [x] **Verification:** Send 10 concurrent requests to `/api/execute` via a test script. Verify that the VM CPU does not spike dangerously and the worker processes exactly 3 jobs at a time.
 
 #### Phase 3: File Uploads & Manual Grading UI
 - [ ] **Step 3.1:** Create `src/app/api/upload/route.ts` to handle `multipart/form-data`. Save PDF files securely to `./src/uploads/[assignmentId]/[userId].pdf`. Save the path in the `Submission` Prisma record.

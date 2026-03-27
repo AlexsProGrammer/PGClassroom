@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## 0.5.0 - 2026-03-27
+
+- Added Redis container to `docker-compose.yml` for BullMQ queue backend.
+- Secured Piston container: removed public port binding, now bound to `127.0.0.1:2000` only (localhost dev) with `expose: ["2000"]` for production Docker networking.
+- Installed `bullmq` and `ioredis` dependencies.
+- Created `src/lib/queue.ts` with BullMQ `Queue` and `Worker` (concurrency: 3) that processes code execution jobs against Piston and saves results to Prisma.
+- Refactored `src/app/api/execute/route.ts` to enqueue jobs via BullMQ instead of calling Piston directly; returns `jobId` and `submissionId` with 202 status.
+- Added `src/app/api/submissions/[id]/route.ts` polling endpoint for frontend to check submission results.
+- Updated student quest page to poll for async execution results instead of waiting synchronously.
+- Added `REDIS_URL` to `.env`.
+- Verified: 10 concurrent requests processed correctly through queue with concurrency limit of 3.
+
 ## 0.4.0 - 2026-03-27
 
 - Added `Role` enum (STUDENT, EDITOR, TEACHER) and `User` model with `password` and `role` fields to Prisma schema.

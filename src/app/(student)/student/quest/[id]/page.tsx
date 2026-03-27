@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Editor from '@monaco-editor/react'
 
@@ -19,6 +19,15 @@ type ExecuteResponse = {
   stderr?: string | null
   compile_output?: string | null
   error?: string
+}
+
+type SubmissionPoll = {
+  id: number
+  status: string
+  stdout: string | null
+  stderr: string | null
+  compile_output: string | null
+  runCode: number | null
 }
 
 function mapLanguageToMonaco(language: string): string {
@@ -105,12 +114,45 @@ export default function StudentQuestPage() {
     return mapLanguageToMonaco(assignment.language)
   }, [assignment])
 
+  const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const pollSubmission = useCallback(async (submissionId: number) => {
+    try {
+      const res = await fetch(`/api/submissions/${submissionId}`)
+      if (!res.ok) throw new Error('Failed to fetch submission')
+      const data: SubmissionPoll = await res.json()
+
+      if (data.status === 'PENDING' || data.status === 'RUNNING') {
+        pollRef.current = setTimeout(() => pollSubmission(submissionId), 1000)
+        return
+      }
+
+      setResult({
+        status: data.status,
+        stdout: data.stdout,
+        stderr: data.stderr,
+        compile_output: data.compile_output,
+      })
+      setIsLoading(false)
+    } catch {
+      setError('Failed to check submission status')
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (pollRef.current) clearTimeout(pollRef.current)
+    }
+  }, [])
+
   async function runCode() {
     if (!assignment) return
 
     setIsLoading(true)
     setError('')
     setResult(null)
+    if (pollRef.current) clearTimeout(pollRef.current)
 
     try {
       const response = await fetch('/api/execute', {
@@ -124,18 +166,19 @@ export default function StudentQuestPage() {
         }),
       })
 
-      const data: ExecuteResponse = await response.json()
+      const data = await response.json()
 
       if (!response.ok) {
         throw new Error(data.error || 'Execution failed')
       }
 
-      setResult(data)
+      // Start polling for result
+      setResult({ status: 'PENDING' })
+      pollSubmission(data.submissionId)
     } catch (executionError) {
       const message =
         executionError instanceof Error ? executionError.message : 'Execution failed'
       setError(message)
-    } finally {
       setIsLoading(false)
     }
   }

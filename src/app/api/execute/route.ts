@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { auth } from '@/lib/auth'
 import { executeQueue } from '@/lib/queue'
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await auth()
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const userId = Number(session.user.id)
     const { code, assignmentId } = await request.json()
 
     if (!code || !assignmentId) {
@@ -24,10 +31,22 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create a submission in PENDING state
-    const submission = await prisma.submission.create({
-      data: {
+    // Upsert a submission in PENDING state (one per user per assignment)
+    const submission = await prisma.submission.upsert({
+      where: {
+        assignmentId_userId: { assignmentId: Number(assignmentId), userId },
+      },
+      update: {
+        code,
+        status: 'PENDING',
+        stdout: null,
+        stderr: null,
+        compile_output: null,
+        runCode: null,
+      },
+      create: {
         assignmentId: Number(assignmentId),
+        userId,
         code,
       },
     })

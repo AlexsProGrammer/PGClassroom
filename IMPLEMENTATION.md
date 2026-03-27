@@ -52,10 +52,10 @@
 - [x] **Verification:** Seed the database with mock submissions. Navigate to both dashboards and verify the aggregated numbers display correctly within the Card UI.
 
 #### Phase 3: Dynamic Assignment Engine (Student View)
-- [ ] **Step 3.1:** Create `src/components/assignments/CodeWorkspace.tsx` (migrating the existing Monaco logic here), `QuizWorkspace.tsx` (rendering a form based on `config.questions` using `RadioGroup`), and `UploadWorkspace.tsx` (rendering an `<Input type="file">`).
-- [ ] **Step 3.2:** Refactor `src/app/(student)/student/quest/[id]/page.tsx`. Fetch the Assignment. Based on `assignment.type`, render the corresponding Workspace component, passing the assignment config and ID as props.
-- [ ] **Step 3.3:** Standardize the submission API. Update `src/app/api/submissions/[id]/route.ts` or create a new POST route to handle saving the JSON content (Code string, Quiz answers array, or File path) based on the assignment type.
-- [ ] **Verification:** Create three mock assignments in the DB (one CODE, one QUIZ, one FILE_UPLOAD). Navigate to their respective URLs as a student and verify the UI dynamically shifts from a code editor to a quiz form to an upload dropzone.
+- [x] **Step 3.1:** Create `src/components/assignments/CodeWorkspace.tsx` (migrating the existing Monaco logic here), `QuizWorkspace.tsx` (rendering a form based on `config.questions` using `RadioGroup`), and `UploadWorkspace.tsx` (rendering an `<Input type="file">`).
+- [x] **Step 3.2:** Refactor `src/app/(student)/student/quest/[id]/page.tsx`. Fetch the Assignment. Based on `assignment.type`, render the corresponding Workspace component, passing the assignment config and ID as props.
+- [x] **Step 3.3:** Standardize the submission API. Update `src/app/api/submissions/[id]/route.ts` or create a new POST route to handle saving the JSON content (Code string, Quiz answers array, or File path) based on the assignment type.
+- [x] **Verification:** Create three mock assignments in the DB (one CODE, one QUIZ, one FILE_UPLOAD). Navigate to their respective URLs as a student and verify the UI dynamically shifts from a code editor to a quiz form to an upload dropzone.
 
 #### Phase 4: Advanced Grading UI (Admin View)
 - [ ] **Step 4.1:** Overhaul `src/app/(admin)/admin/grading/page.tsx`. Use the `shadcn` `<Table>` component to list all Submissions. Add columns for Student Name, Assignment Title, Status (Badge: Pending/Graded), and an "Action" button linking to the specific submission.

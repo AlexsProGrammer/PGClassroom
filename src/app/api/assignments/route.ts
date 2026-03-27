@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 export async function GET() {
@@ -17,9 +18,26 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const session = await auth()
+  if (
+    !session?.user?.role ||
+    !["EDITOR", "TEACHER"].includes(session.user.role)
+  ) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+
   try {
-    const { title, description, language, languageVersion, expected_output } =
-      await request.json()
+    const body = await request.json()
+    const { title, description, language, languageVersion, expected_output, type, config } =
+      body as {
+        title: string
+        description: string
+        language: string
+        languageVersion: string
+        expected_output: string
+        type?: string
+        config?: unknown
+      }
 
     if (!title || !language || !languageVersion) {
       return NextResponse.json(
@@ -28,6 +46,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const validTypes = ["CODE", "QUIZ", "UPLOAD"]
+    const assignmentType = validTypes.includes(type ?? "") ? type! : "CODE"
+
     const assignment = await prisma.assignment.create({
       data: {
         title,
@@ -35,6 +56,8 @@ export async function POST(request: NextRequest) {
         language,
         languageVersion,
         expected_output: expected_output || '',
+        type: assignmentType as "CODE" | "QUIZ" | "UPLOAD",
+        config: config ?? undefined,
       },
     })
 

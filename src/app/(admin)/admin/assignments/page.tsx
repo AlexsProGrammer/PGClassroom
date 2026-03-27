@@ -17,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { CreateAssignmentDialog } from "@/components/assignments/CreateAssignmentDialog"
 
 export default async function AssignmentsPage() {
   const session = await auth()
@@ -36,11 +37,14 @@ export default async function AssignmentsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Assignments</h1>
-        <p className="text-muted-foreground">
-          {assignments.length} assignment{assignments.length !== 1 ? "s" : ""} total
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Assignments</h1>
+          <p className="text-muted-foreground">
+            {assignments.length} assignment{assignments.length !== 1 ? "s" : ""} total
+          </p>
+        </div>
+        <CreateAssignmentDialog />
       </div>
 
       <Card>

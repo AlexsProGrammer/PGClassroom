@@ -65,10 +65,10 @@
 - [x] **Verification:** Log in as an EDITOR. Navigate to `/admin/grading`. Click on a pending submission. Verify the split-screen layout renders the correct content on the left and successfully saves points/feedback on the right.
 
 #### Phase 5: Settings & Profile Management
-- [ ] **Step 5.1:** Create `src/app/(admin)/admin/settings/page.tsx` and `src/app/(student)/student/settings/page.tsx` (or share a common component).
-- [ ] **Step 5.2:** Implement a form using `shadcn` `<Form>` to update the user's `name` (Display Name).
-- [ ] **Step 5.3:** Implement a "Change Password" section requiring the current password, new password, and confirmation, utilizing `bcryptjs` for verification in a protected API route.
-- [ ] **Verification:** Navigate to the Settings page. Change the display name and verify the Sidebar UserNav immediately reflects the new name. Attempt a password change and re-login to confirm it works.
+- [x] **Step 5.1:** Create `src/app/(admin)/admin/settings/page.tsx` and `src/app/(student)/student/settings/page.tsx` (or share a common component).
+- [x] **Step 5.2:** Implement a form using `shadcn` `<Form>` to update the user's `name` (Display Name).
+- [x] **Step 5.3:** Implement a "Change Password" section requiring the current password, new password, and confirmation, utilizing `bcryptjs` for verification in a protected API route.
+- [x] **Verification:** Navigate to the Settings page. Change the display name and verify the Sidebar UserNav immediately reflects the new name. Attempt a password change and re-login to confirm it works.
 
 ## 3. Global Testing Strategy
 - **Responsive Layout Test:** Shrink the browser window to mobile size. Ensure the `shadcn` Sidebar collapses into a hamburger menu and the split-screen grading UI stacks vertically instead of horizontally.

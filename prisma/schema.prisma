@@ -72,6 +72,7 @@ model Submission {
   points         Int?
   tutorFeedback  String?
   aiFeedback     String?
+  createdAt      DateTime         @default(now())
   assignment     Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   user           User?            @relation(fields: [userId], references: [id])
 

@@ -46,10 +46,10 @@
 - [x] **Verification:** Run `pnpm dev`. Log in as a TEACHER, verify the Admin Sidebar renders. Log out, log in as a STUDENT, verify the Student Sidebar renders.
 
 #### Phase 2: Analytics Dashboards
-- [ ] **Step 2.1:** Overhaul `src/app/(student)/student/dashboard/page.tsx`. Use `shadcn` `<Card>` components to display: Total XP (sum of points from GRADED submissions), Completed Quests count, and a list of Pending Quests. Use `<Progress>` to show level progress.
-- [ ] **Step 2.2:** Overhaul `src/app/(admin)/admin/dashboard/page.tsx`. Create metric cards using Prisma aggregates: Total Students (count users where role=STUDENT), Total Assignments, and Submissions requiring Grading (count submissions where status=PENDING or AUTO_GRADED).
-- [ ] **Step 2.3:** Add a "Recent Activity" table on the Admin dashboard showing the last 5 submissions across all students.
-- [ ] **Verification:** Seed the database with mock submissions. Navigate to both dashboards and verify the aggregated numbers display correctly within the Card UI.
+- [x] **Step 2.1:** Overhaul `src/app/(student)/student/dashboard/page.tsx`. Use `shadcn` `<Card>` components to display: Total XP (sum of points from GRADED submissions), Completed Quests count, and a list of Pending Quests. Use `<Progress>` to show level progress.
+- [x] **Step 2.2:** Overhaul `src/app/(admin)/admin/dashboard/page.tsx`. Create metric cards using Prisma aggregates: Total Students (count users where role=STUDENT), Total Assignments, and Submissions requiring Grading (count submissions where status=PENDING or AUTO_GRADED).
+- [x] **Step 2.3:** Add a "Recent Activity" table on the Admin dashboard showing the last 5 submissions across all students.
+- [x] **Verification:** Seed the database with mock submissions. Navigate to both dashboards and verify the aggregated numbers display correctly within the Card UI.
 
 #### Phase 3: Dynamic Assignment Engine (Student View)
 - [ ] **Step 3.1:** Create `src/components/assignments/CodeWorkspace.tsx` (migrating the existing Monaco logic here), `QuizWorkspace.tsx` (rendering a form based on `config.questions` using `RadioGroup`), and `UploadWorkspace.tsx` (rendering an `<Input type="file">`).

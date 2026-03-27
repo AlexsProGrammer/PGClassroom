@@ -8,27 +8,38 @@ type Assignment = {
   id: number
   title: string
   description: string
-  language_id: number
+  language: string
+  languageVersion: string
   expected_output: string
 }
 
 type ExecuteResponse = {
-  judge0_status?: string
+  status?: string
   stdout?: string | null
   stderr?: string | null
   compile_output?: string | null
   error?: string
 }
 
-function mapLanguageIdToMonaco(languageId: number): string {
-  if (languageId === 71) return 'python'
-  if (languageId === 62) return 'java'
-  return 'plaintext'
+function mapLanguageToMonaco(language: string): string {
+  switch (language) {
+    case 'python': return 'python'
+    case 'java': return 'java'
+    case 'javascript': return 'javascript'
+    case 'typescript': return 'typescript'
+    case 'c': return 'c'
+    case 'c++': return 'cpp'
+    case 'csharp': return 'csharp'
+    case 'go': return 'go'
+    case 'ruby': return 'ruby'
+    case 'rust': return 'rust'
+    default: return 'plaintext'
+  }
 }
 
-function defaultCode(languageId: number): string {
-  if (languageId === 71) return 'print("Hello World")'
-  if (languageId === 62) {
+function defaultCode(language: string): string {
+  if (language === 'python') return 'print("Hello World")'
+  if (language === 'java') {
     return [
       'public class Main {',
       '  public static void main(String[] args) {',
@@ -73,7 +84,7 @@ export default function StudentQuestPage() {
         }
 
         setAssignment(foundAssignment)
-        setCode(defaultCode(foundAssignment.language_id))
+        setCode(defaultCode(foundAssignment.language))
       } catch {
         setError('Unable to load assignment')
       } finally {
@@ -91,7 +102,7 @@ export default function StudentQuestPage() {
 
   const monacoLanguage = useMemo(() => {
     if (!assignment) return 'plaintext'
-    return mapLanguageIdToMonaco(assignment.language_id)
+    return mapLanguageToMonaco(assignment.language)
   }, [assignment])
 
   async function runCode() {
@@ -190,7 +201,7 @@ export default function StudentQuestPage() {
           {!error && result && (
             <div className="mt-3 space-y-3 text-sm">
               <p className="text-zinc-700 dark:text-zinc-300">
-                Status: <span className="font-medium">{result.judge0_status || 'Unknown'}</span>
+                Status: <span className="font-medium">{result.status || 'Unknown'}</span>
               </p>
               {result.compile_output && (
                 <div>

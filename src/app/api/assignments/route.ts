@@ -18,12 +18,12 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { title, description, language_id, expected_output } =
+    const { title, description, language, languageVersion, expected_output } =
       await request.json()
 
-    if (!title || !language_id) {
+    if (!title || !language || !languageVersion) {
       return NextResponse.json(
-        { error: 'Missing required fields: title, language_id' },
+        { error: 'Missing required fields: title, language, languageVersion' },
         { status: 400 }
       )
     }
@@ -32,7 +32,8 @@ export async function POST(request: NextRequest) {
       data: {
         title,
         description: description || '',
-        language_id,
+        language,
+        languageVersion,
         expected_output: expected_output || '',
       },
     })

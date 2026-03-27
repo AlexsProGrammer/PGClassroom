@@ -16,7 +16,8 @@ model Assignment {
   id              Int          @id @default(autoincrement())
   title           String
   description     String
-  language_id     Int
+  language        String
+  languageVersion String
   expected_output String
   submissions     Submission[]
 }
@@ -29,5 +30,6 @@ model Submission {
   stdout          String?
   stderr          String?
   compile_output  String?
+  runCode         Int?
   assignment      Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
 }

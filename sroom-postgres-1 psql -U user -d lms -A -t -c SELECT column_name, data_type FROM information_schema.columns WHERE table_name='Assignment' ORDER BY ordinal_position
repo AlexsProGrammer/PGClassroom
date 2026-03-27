@@ -1,0 +1,14 @@
+                                  Table "public.Assignment"
+     Column      |  Type   | Collation | Nullable |                 Default                  
+-----------------+---------+-----------+----------+------------------------------------------
+ id              | integer |           | not null | nextval('"Assignment_id_seq"'::regclass)
+ title           | text    |           | not null | 
+ description     | text    |           | not null | 
+ language        | text    |           | not null | 
+ languageVersion | text    |           | not null | 
+ expected_output | text    |           | not null | 
+Indexes:
+    "Assignment_pkey" PRIMARY KEY, btree (id)
+Referenced by:
+    TABLE ""Submission"" CONSTRAINT "Submission_assignmentId_fkey" FOREIGN KEY ("assignmentId") REFERENCES "Assignment"(id) ON UPDATE CASCADE ON DELETE CASCADE
+

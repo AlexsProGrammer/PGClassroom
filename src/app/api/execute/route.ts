@@ -1,15 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-interface Judge0Submission {
-  stdout: string | null
-  stderr: string | null
-  compile_output: string | null
+interface PistonStageResult {
+  stdout: string
+  stderr: string
+  output: string
+  code: number | null
+  signal: string | null
   message: string | null
-  status: {
-    id: number
-    description: string
+  status: string | null
+  cpu_time: number
+  wall_time: number
+  memory: number
+}
+
+interface PistonResponse {
+  language: string
+  version: string
+  run: PistonStageResult
+  compile?: PistonStageResult
+}
+
+function deriveStatus(result: PistonResponse): string {
+  const compile = result.compile
+  if (compile && (compile.code !== 0 || compile.status)) {
+    return 'Compilation Error'
   }
+
+  const run = result.run
+  if (run.status === 'TO') return 'Time Limit Exceeded'
+  if (run.status === 'SG') return 'Signal Error'
+  if (run.status === 'RE') return 'Runtime Error'
+  if (run.status === 'OL') return 'Output Limit Exceeded'
+  if (run.status === 'EL') return 'Stderr Limit Exceeded'
+  if (run.status === 'XX') return 'Internal Error'
+  if (run.code === 0) return 'Accepted'
+  return 'Runtime Error'
 }
 
 export async function POST(request: NextRequest) {
@@ -23,7 +49,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Fetch assignment to get language_id
     const assignment = await prisma.assignment.findUnique({
       where: { id: Number(assignmentId) },
     })
@@ -35,49 +60,58 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Send code to Judge0
-    const judge0Url = process.env.JUDGE0_URL || 'http://localhost:2358'
-    const judge0Response = await fetch(
-      `${judge0Url}/submissions?base64_encoded=false&wait=true`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          source_code: code,
-          language_id: assignment.language_id,
-        }),
-      }
-    )
+    // Build Piston execute request
+    const pistonUrl = process.env.PISTON_URL || 'http://localhost:2000'
+    const files: { name?: string; content: string }[] = [{ content: code }]
 
-    if (!judge0Response.ok) {
-      throw new Error(
-        `Judge0 error: ${judge0Response.status} ${judge0Response.statusText}`
-      )
+    // Java requires the file to be named Main.java
+    if (assignment.language === 'java') {
+      files[0].name = 'Main.java'
     }
 
-    const judge0Result: Judge0Submission = await judge0Response.json()
+    const pistonResponse = await fetch(`${pistonUrl}/api/v2/execute`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        language: assignment.language,
+        version: assignment.languageVersion,
+        files,
+        run_timeout: 3000,
+        compile_timeout: 10000,
+        run_memory_limit: 256_000_000,
+      }),
+    })
 
-    // Use message as fallback for compile_output if compile_output is empty
-    const compileOutput = judge0Result.compile_output || judge0Result.message || ''
+    if (!pistonResponse.ok) {
+      const errBody = await pistonResponse.json().catch(() => null)
+      const msg = errBody?.message ?? `${pistonResponse.status} ${pistonResponse.statusText}`
+      throw new Error(`Piston error: ${msg}`)
+    }
 
-    // Create submission record in database
+    const pistonResult: PistonResponse = await pistonResponse.json()
+
+    const status = deriveStatus(pistonResult)
+    const compileOutput =
+      pistonResult.compile?.stderr || pistonResult.compile?.message || ''
+
     const submission = await prisma.submission.create({
       data: {
         assignmentId: Number(assignmentId),
         code,
-        status: judge0Result.status?.description || 'Unknown',
-        stdout: judge0Result.stdout || '',
-        stderr: judge0Result.stderr || '',
+        status,
+        stdout: pistonResult.run.stdout || '',
+        stderr: pistonResult.run.stderr || '',
         compile_output: compileOutput,
+        runCode: pistonResult.run.code,
       },
     })
 
     return NextResponse.json(
       {
         submission,
-        judge0_status: judge0Result.status?.description,
-        stdout: judge0Result.stdout,
-        stderr: judge0Result.stderr,
+        status,
+        stdout: pistonResult.run.stdout,
+        stderr: pistonResult.run.stderr,
         compile_output: compileOutput,
       },
       { status: 201 }

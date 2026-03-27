@@ -25,7 +25,7 @@ pnpm prisma validate
 pnpm prisma db push
 pnpm dev
 docker compose up -d
-curl http://localhost:2358/languages
+curl http://localhost:2000/api/v2/runtimes
 ```
 
 ## Execution Policy

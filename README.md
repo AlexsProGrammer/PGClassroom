@@ -1,36 +1,52 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+### Prerequisites
 
-First, run the development server:
+- **Docker** and **Docker Compose** (for Postgres and Piston)
+- **Node.js** (>= 18)
+- **pnpm** (`npm i -g pnpm`)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### Setup
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. **Clone the repository** and install dependencies:
+   ```bash
+   git clone <repo-url> && cd Pro-GrammerClassroom
+   pnpm install
+   ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+2. **Start infrastructure** (Postgres + Piston):
+   ```bash
+   docker compose up -d
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. **Install language runtimes** in Piston (first time only — persisted via Docker volume):
+   ```bash
+   curl -X POST http://localhost:2000/api/v2/packages \
+     -H "Content-Type: application/json" \
+     -d '{"language":"python","version":"3.12.0"}'
 
-## Learn More
+   curl -X POST http://localhost:2000/api/v2/packages \
+     -H "Content-Type: application/json" \
+     -d '{"language":"java","version":"15.0.2"}'
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+4. **Configure environment** — create `.env` in the project root:
+   ```
+   DATABASE_URL="postgresql://user:pass@localhost:5433/lms"
+   PISTON_URL="http://localhost:2000"
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+5. **Push the database schema**:
+   ```bash
+   pnpm prisma db push
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+6. **Start the dev server**:
+   ```bash
+   pnpm dev
+   ```
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+7. **Verify**:
+   - Admin dashboard: [http://localhost:3000/admin/dashboard](http://localhost:3000/admin/dashboard)
+   - Student workspace: `http://localhost:3000/student/quest/<assignment-id>`
+   - Piston runtimes: `curl http://localhost:2000/api/v2/runtimes`

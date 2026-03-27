@@ -6,26 +6,36 @@ type Assignment = {
   id: number
   title: string
   description: string
-  language_id: number
+  language: string
+  languageVersion: string
   expected_output: string
+}
+
+type Runtime = {
+  language: string
+  version: string
+  aliases: string[]
 }
 
 type FormState = {
   title: string
   description: string
-  language_id: number
+  language: string
+  languageVersion: string
   expected_output: string
 }
 
 const initialFormState: FormState = {
   title: '',
   description: '',
-  language_id: 71,
+  language: '',
+  languageVersion: '',
   expected_output: '',
 }
 
 export default function AdminDashboardPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([])
+  const [runtimes, setRuntimes] = useState<Runtime[]>([])
   const [form, setForm] = useState<FormState>(initialFormState)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string>('')
@@ -41,9 +51,34 @@ export default function AdminDashboardPage() {
     setAssignments(data)
   }
 
+  async function loadRuntimes() {
+    const response = await fetch('/api/runtimes', { method: 'GET' })
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch runtimes')
+    }
+
+    const data: Runtime[] = await response.json()
+    setRuntimes(data)
+
+    if (data.length > 0) {
+      setForm((prev) => {
+        if (prev.language) return prev
+        return {
+          ...prev,
+          language: data[0].language,
+          languageVersion: data[0].version,
+        }
+      })
+    }
+  }
+
   useEffect(() => {
     loadAssignments().catch(() => {
       setError('Unable to load assignments')
+    })
+    loadRuntimes().catch(() => {
+      setError('Unable to load runtimes')
     })
   }, [])
 
@@ -117,17 +152,22 @@ export default function AdminDashboardPage() {
             <label className="grid gap-1 text-sm font-medium text-zinc-800 dark:text-zinc-200">
               Language
               <select
-                value={form.language_id}
-                onChange={(event) =>
+                value={`${form.language}@${form.languageVersion}`}
+                onChange={(event) => {
+                  const [lang, ver] = event.target.value.split('@')
                   setForm((previous) => ({
                     ...previous,
-                    language_id: Number(event.target.value),
+                    language: lang,
+                    languageVersion: ver,
                   }))
-                }
+                }}
                 className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 outline-none focus:ring-2 focus:ring-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
               >
-                <option value={71}>Python (71)</option>
-                <option value={62}>Java (62)</option>
+                {runtimes.map((rt) => (
+                  <option key={`${rt.language}@${rt.version}`} value={`${rt.language}@${rt.version}`}>
+                    {rt.language} ({rt.version})
+                  </option>
+                ))}
               </select>
             </label>
 
@@ -175,7 +215,7 @@ export default function AdminDashboardPage() {
                   {assignment.title}
                 </p>
                 <p className="text-sm text-zinc-600 dark:text-zinc-300">
-                  Language ID: {assignment.language_id}
+                  Language: {assignment.language} ({assignment.languageVersion})
                 </p>
               </li>
             ))}

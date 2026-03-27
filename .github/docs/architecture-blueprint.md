@@ -14,7 +14,8 @@
 ### Routing & API Layer
 - HTTP route handlers live under `src/app/api/**/route.ts`.
 - `src/app/api/assignments/route.ts`: assignment CRUD endpoints.
-- `src/app/api/execute/route.ts`: Judge0 execution bridge endpoint.
+- `src/app/api/execute/route.ts`: Piston execution bridge endpoint.
+- `src/app/api/runtimes/route.ts`: Proxy for Piston runtimes list.
 
 ### Business Logic & Data Access
 - Prisma client singleton lives in `src/lib/prisma.ts`.
@@ -23,10 +24,10 @@
 
 ### External Systems
 - PostgreSQL persists assignments/submissions.
-- Judge0 provides isolated code execution.
-- Docker Compose orchestrates `postgres`, `redis`, `judge0-server`, and `judge0-worker`.
+- Piston provides isolated code execution (`ghcr.io/engineer-man/piston`, port 2000).
+- Docker Compose orchestrates `postgres` and `piston`.
 
 ## Boundary Rules
 - UI components do not directly call Prisma.
 - API routes validate input and delegate to typed service logic.
-- Judge0 response normalization is centralized before persistence.
+- Piston response normalization is centralized before persistence.

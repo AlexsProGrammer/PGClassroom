@@ -63,7 +63,7 @@ export default async function GradingDetailPage({
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon-sm" render={<Link href="/admin/grading" />}>
+        <Button variant="ghost" size="icon-sm" nativeButton={false} render={<Link href="/admin/grading" />}>
           <ArrowLeft className="size-4" />
         </Button>
         <div className="flex-1">

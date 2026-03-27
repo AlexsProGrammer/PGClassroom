@@ -118,7 +118,7 @@ export default async function GradingListPage() {
                       {sub.createdAt.toLocaleDateString()}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="icon-sm" render={<Link href={`/admin/grading/${sub.id}`} />}>
+                      <Button variant="ghost" size="icon-sm" nativeButton={false} render={<Link href={`/admin/grading/${sub.id}`} />}>
                         <Eye className="size-4" />
                       </Button>
                     </TableCell>

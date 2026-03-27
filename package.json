@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "hash:password": "node scripts/hash-password.mjs",
+    "bootstrap:admin": "node --env-file=.env scripts/bootstrap-admin.mjs"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",

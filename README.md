@@ -34,6 +34,18 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
    ```
    DATABASE_URL="postgresql://user:pass@localhost:5433/lms"
    PISTON_URL="http://localhost:2000"
+   AUTH_SECRET="<generate-a-random-secret>"
+   REDIS_URL="redis://localhost:6380"
+
+   BOOTSTRAP_ADMIN_EMAIL="teacher@test.com"
+   BOOTSTRAP_ADMIN_NAME="First Teacher"
+   BOOTSTRAP_ADMIN_ROLE="TEACHER"
+   BOOTSTRAP_ADMIN_PASSWORD_HASH="<bcrypt-hash>"
+   ```
+
+   Generate a bcrypt hash in the console:
+   ```bash
+   pnpm hash:password -- "Admin123!"
    ```
 
 5. **Push the database schema**:
@@ -41,12 +53,17 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
    pnpm prisma db push
    ```
 
-6. **Start the dev server**:
+6. **Create/update the first login account**:
+   ```bash
+   pnpm bootstrap:admin
+   ```
+
+7. **Start the dev server**:
    ```bash
    pnpm dev
    ```
 
-7. **Verify**:
+8. **Verify**:
    - Admin dashboard: [http://localhost:3000/admin/dashboard](http://localhost:3000/admin/dashboard)
    - Student workspace: `http://localhost:3000/student/quest/<assignment-id>`
    - Piston runtimes: `curl http://localhost:2000/api/v2/runtimes`

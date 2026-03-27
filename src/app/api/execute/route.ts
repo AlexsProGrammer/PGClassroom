@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { SubmissionStatus } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 
 interface PistonStageResult {
@@ -21,21 +22,19 @@ interface PistonResponse {
   compile?: PistonStageResult
 }
 
-function deriveStatus(result: PistonResponse): string {
+function deriveStatus(result: PistonResponse): SubmissionStatus {
   const compile = result.compile
   if (compile && (compile.code !== 0 || compile.status)) {
-    return 'Compilation Error'
+    return SubmissionStatus.COMPILATION_ERROR
   }
 
   const run = result.run
-  if (run.status === 'TO') return 'Time Limit Exceeded'
-  if (run.status === 'SG') return 'Signal Error'
-  if (run.status === 'RE') return 'Runtime Error'
-  if (run.status === 'OL') return 'Output Limit Exceeded'
-  if (run.status === 'EL') return 'Stderr Limit Exceeded'
-  if (run.status === 'XX') return 'Internal Error'
-  if (run.code === 0) return 'Accepted'
-  return 'Runtime Error'
+  if (run.status === 'TO' || run.status === 'SG' || run.status === 'OL' || run.status === 'EL' || run.status === 'XX') {
+    return SubmissionStatus.RUNTIME_ERROR
+  }
+  if (run.status === 'RE') return SubmissionStatus.RUNTIME_ERROR
+  if (run.code === 0) return SubmissionStatus.ACCEPTED
+  return SubmissionStatus.RUNTIME_ERROR
 }
 
 export async function POST(request: NextRequest) {

@@ -1,72 +1,62 @@
-# IMPLEMENTATION.md - Build 1: Self-Hosted LMS Prototype
+
+# IMPLEMENTATION.md - Build 2.0: Enterprise LMS (Piston, DSGVO, Auth & AI Batching)
 
 ## 1. Project Context & Architecture
-- **Goal:** Build the first functional prototype (Build 1) of a self-hosted, air-gapped capable Learning Management System (LMS) for programming tasks. It features a Next.js full-stack application (serving both Admin and Student interfaces) and relies on a local Piston instance for secure, multi-language code execution.
+- **Goal:** Upgrade the existing Next.js + Piston codebase to a fully secure, GDPR-compliant (DSGVO) LMS. Implement role-based access control (RBAC), multi-type assignments (Code, Quizzes, PDF Uploads), asynchronous execution queuing via BullMQ, manual grading interfaces, and a nightly batch-processing AI grader using a local Ollama instance (Gemma 2B).
 - **Tech Stack & Dependencies:**
-  - **Framework:** Next.js 14+ (App Router) with TypeScript.
-  - **Database & ORM:** PostgreSQL, Prisma ORM.
-  - **Execution Engine:** Piston (Self-hosted via Docker Compose, `ghcr.io/engineer-man/piston`).
-  - **Package Manager:** `pnpm`.
-  - **UI/Editor:** Tailwind CSS, `lucide-react`, `@monaco-editor/react`.
-  - **Initial Commands:** - `pnpm create next-app@latest lms-prototype --typescript --tailwind --eslint --app --src-dir --import-alias "@/*"`
-    - `pnpm add @prisma/client @monaco-editor/react lucide-react`
-    - `pnpm add -D prisma`
+  - **Auth:** `next-auth@beta` (Auth.js v5), `bcryptjs`
+  - **Queueing:** `bullmq`, `ioredis`
+  - **File Handling:** `multer` or Next.js native API route standard form parsing.
+  - **AI Integration:** Official `ollama` Node.js SDK.
+  - **Cron:** `node-cron`
+  - **Commands:** - `pnpm add next-auth@beta bcryptjs bullmq ioredis node-cron ollama`
+    - `pnpm add -D @types/bcryptjs @types/node-cron`
 - **File Structure:**
   ```text
-  ├── docker-compose.yml              # Defines Postgres and Piston
+  ├── docker-compose.yml              # Add Redis (for BullMQ) and Ollama. Secure Piston.
   ├── prisma/
-  │   └── schema.prisma               # Database schema (Models: Assignment, Submission)
+  │   └── schema.prisma               # Expand with Roles, Assignment Types, Feedback
   ├── src/
   │   ├── app/
-  │   │   ├── (admin)/
-  │   │   │   └── admin/dashboard/    # Admin UI: Create/List assignments
-  │   │   ├── (student)/
-  │   │   │   └── student/quest/[id]/ # Student UI: Monaco editor and execution UI
+  │   │   ├── (auth)/                 # Login pages
+  │   │   ├── (admin)/                # Teacher/Editor routes (Grading UI)
   │   │   ├── api/
-  │   │   │   ├── assignments/        # CRUD for assignments
-  │   │   │   ├── execute/            # Bridge between Next.js and Piston
-  │   │   │   └── runtimes/           # Proxy for Piston runtimes list
-  │   ├── components/                 # Reusable UI (Buttons, Navbar, EditorWrapper)
-  │   └── lib/
-  │       └── prisma.ts               # Prisma client singleton
-  ├── .env                            # DB connection string and PISTON_URL
+  │   │   │   ├── auth/[...nextauth]/ # NextAuth config
+  │   │   │   └── execute/            # Refactored to use BullMQ
+  │   ├── lib/
+  │   │   ├── auth.ts                 # NextAuth logic & Role Middleware
+  │   │   ├── queue.ts                # BullMQ producer and worker setup
+  │   │   └── cron.ts                 # Nightly AI grading script
+  │   └── uploads/                    # Local directory for PDF uploads
   ```
-- **Attention Points:** - **Piston Networking:** The Next.js API must communicate with Piston via `localhost:2000` in local dev. Piston is a single container with no external dependencies (no Redis, no separate DB).
-  - **Runtime Installation:** Language runtimes must be installed in Piston after first boot via `POST /api/v2/packages`. Installed packages persist via the `piston_packages` Docker volume.
-  - **Authentication:** For Build 1, implement pseudo-authentication (hardcoded user ID or simple dropdown selection) to keep focus on the core execution loop. Real auth will be added in Build 2.
+- **Attention Points:** - **Security:** Remove port `2000:2000` from Piston in `docker-compose.yml` to prevent external access. It must only communicate via the internal Docker bridge.
+  - **AI Ram Management:** Ollama must be configured to unload the model when idle.
 
 ## 2. Execution Phases
 
-#### Phase 1: Infrastructure & Database Scaffolding
-- [x] **Step 1.1:** Initialize the Next.js project using `pnpm create next-app`.
-- [x] **Step 1.2:** Create a `docker-compose.yml` in the root. Define 2 services: `postgres` (port 5433:5432) and `piston` (`ghcr.io/engineer-man/piston`, port 2000:2000, privileged, with `piston_packages` volume).
-- [x] **Step 1.3:** Initialize Prisma using `pnpm prisma init`. In `prisma/schema.prisma`, define models: `Assignment` (id, title, description, language, languageVersion, expected_output) and `Submission` (id, assignmentId, code, status, stdout, stderr, compile_output, runCode).
-- [x] **Step 1.4:** Add `.env` variables for `DATABASE_URL="postgresql://user:pass@localhost:5433/lms"` and `PISTON_URL="http://localhost:2000"`. Run `pnpm prisma db push` to sync the schema.
-- [x] **Step 1.5:** Install language runtimes in Piston: `curl -X POST http://localhost:2000/api/v2/packages -d '{"language":"python","version":"3.12.0"}'` and `'{"language":"java","version":"15.0.2"}'`.
-- [x] **Verification:** Run `docker compose up -d`. Verify the database is accessible by running `pnpm prisma studio` and confirming the tables exist. Execute `curl http://localhost:2000/api/v2/runtimes` and ensure it returns installed runtimes.
+#### Phase 1: Security, Auth & Schema Upgrade
+- [x] **Step 1.1:** Update `prisma/schema.prisma`. Add `enum Role { STUDENT, EDITOR, TEACHER }`. Update `User` with `password` and `role`. Update `Assignment` with `type` (CODE, QUIZ, UPLOAD) and `config` (JSON). Update `Submission` with `points`, `tutorFeedback`, `aiFeedback`, and `status`. Run `pnpm prisma db push`.
+- [x] **Step 1.2:** Implement `src/lib/auth.ts` using NextAuth (Credentials Provider). Verify passwords using `bcryptjs`. 
+- [x] **Step 1.3:** Create a middleware (`src/middleware.ts`) to protect routes. `/admin/*` requires `EDITOR` or `TEACHER` role. All other routes require authentication.
+- [x] **Verification:** Start the app. Attempt to access `/admin/dashboard` unauthenticated and verify redirection to `/login`.
 
-#### Phase 2: Core API & Execution Bridge
-- [x] **Step 2.1:** Create `src/lib/prisma.ts` to instantiate and export a global Prisma client.
-- [x] **Step 2.2:** Create an API route `src/app/api/assignments/route.ts` implementing `GET` (fetch all) and `POST` (create new assignment).
-- [x] **Step 2.3:** Create the execution bridge `src/app/api/execute/route.ts` (`POST`). Logic: Accept `code` and `assignmentId`. Send a POST request to `${PISTON_URL}/api/v2/execute` payload: `{ language, version, files: [{ content }] }`.
-- [x] **Step 2.4:** In the same `execute` route, capture the response from Piston (`run.stdout`, `run.stderr`, `run.code`, `compile.stderr`), derive a human-readable status, create a `Submission` record via Prisma, and return the result to the client.
-- [x] **Step 2.5:** Create a runtimes proxy `src/app/api/runtimes/route.ts` (`GET`) that forwards `${PISTON_URL}/api/v2/runtimes` to the frontend.
-- [x] **Verification:** Use `curl` to POST a simple Python script (`print("hello")`) to `/api/execute`. Verify it returns the stdout "hello" and a new Submission row appears in Prisma Studio.
+#### Phase 2: Piston Queuing & Rate Limiting (Crucial for VM Stability)
+- [ ] **Step 2.1:** Update `docker-compose.yml` to include a `redis` container. Remove the public ports from the `piston` container so it is only internally accessible.
+- [ ] **Step 2.2:** In `src/lib/queue.ts`, initialize a `Queue` and a `Worker` using `bullmq` connected to Redis. The worker's `concurrency` must be explicitly set to `3`.
+- [ ] **Step 2.3:** Refactor `src/app/api/execute/route.ts`. Instead of calling Piston directly, add the code payload to the BullMQ queue (`queue.add(...)`). Return a `jobId` to the frontend.
+- [ ] **Step 2.4:** The Worker logic in `queue.ts` will pick up the job, make the internal HTTP call to Piston (`http://piston:2000`), and save the result to Prisma.
+- [ ] **Verification:** Send 10 concurrent requests to `/api/execute` via a test script. Verify that the VM CPU does not spike dangerously and the worker processes exactly 3 jobs at a time.
 
-#### Phase 3: Admin Dashboard (Teacher View)
-- [x] **Step 3.1:** Create `src/app/(admin)/admin/dashboard/page.tsx`. Implement a form to create a new Assignment (Title, Description, Dropdown for Language populated dynamically from Piston runtimes).
-- [x] **Step 3.2:** On form submit, `fetch('/api/assignments', { method: 'POST' })` and update a displayed list of current assignments.
-- [x] **Step 3.3:** Render the list of assignments below the form. Include the specific Assignment ID so it can be shared with students.
-- [x] **Verification:** Start `pnpm dev`. Navigate to `http://localhost:3000/admin/dashboard`. Fill out the form, submit it, and verify the new assignment appears in the list and in the database.
+#### Phase 3: File Uploads & Manual Grading UI
+- [ ] **Step 3.1:** Create `src/app/api/upload/route.ts` to handle `multipart/form-data`. Save PDF files securely to `./src/uploads/[assignmentId]/[userId].pdf`. Save the path in the `Submission` Prisma record.
+- [ ] **Step 3.2:** Build the Grading UI at `src/app/(admin)/admin/grading/[assignmentId]/page.tsx`. Fetch all `PENDING` submissions.
+- [ ] **Step 3.3:** Implement a split-screen UI: Left side uses `<iframe src="/api/files/[path]">` to show the PDF or a Monaco editor for code. Right side contains a form for `Points` and `Tutor Feedback`.
+- [ ] **Verification:** Log in as `TEACHER`. Navigate to the grading UI, assign points to a mock submission, and verify the DB updates the status to `MANUALLY_GRADED`.
 
-#### Phase 4: Student Workspace (Code Editor)
-- [x] **Step 4.1:** Create `src/app/(student)/student/quest/[id]/page.tsx`. Fetch the Assignment details based on the `[id]` param.
-- [x] **Step 4.2:** Import and mount `<Editor>` from `@monaco-editor/react`. Set its `language` prop dynamically based on the assignment's configuration.
-- [x] **Step 4.3:** Add a "Run Code" button. On click, grab the editor's current value, send a POST to `/api/execute`, and set an `isLoading` state.
-- [x] **Step 4.4:** Create a "Terminal/Output" UI section below the editor to display the returned `stdout`, `stderr`, or compilation errors after the API call completes.
-- [x] **Verification:** Navigate to `http://localhost:3000/student/quest/1`. Write intentional syntax error code, click Run, and verify the compiler error shows in the Output window. Fix the code, run again, and verify the correct output is displayed.
-
-## 3. Global Testing Strategy
-- **End-to-End Loop:** Go to Admin panel -> Create a Java assignment asking to print "Hello World" -> Copy ID -> Go to Student panel -> Write the Java code -> Execute -> See "Hello World".
-- **Timeout & Abuse Test:** As a student, write an infinite `while(true)` loop. Execute it. Ensure the Next.js UI doesn't crash, and Piston eventually returns a "Time Limit Exceeded" response.
-- **Persistence Test:** Restart the Docker containers (`docker compose down && docker compose up -d`). Verify assignments and past submissions are still intact in Postgres. Verify Piston runtimes persist via the `piston_packages` volume.
+#### Phase 4: Nightly AI Batch Processor (Gemma 2B)
+- [ ] **Step 4.1:** Add `ollama` to `docker-compose.yml` (Image: `ollama/ollama`). Ensure a volume is mounted for model storage. Set environment variable `OLLAMA_KEEP_ALIVE=5m`.
+- [ ] **Step 4.2:** Create `src/lib/cron.ts`. Initialize a `node-cron` job scheduled for `0 2 * * *` (2:00 AM daily).
+- [ ] **Step 4.3:** In the cron callback, fetch all `Submission`s where `type == CODE`, `status == PENDING`, and `aiFeedback == null`.
+- [ ] **Step 4.4:** Iterate through submissions. Use the `ollama` Node SDK to call the local Ollama container with a strict prompt: *"You are a helpful CS teacher. Analyze this student code. Provide 2 sentences of encouraging feedback and 1 technical improvement."*
+- [ ] **Step 4.5:** Save the AI response to `aiFeedback` in Prisma.
+- [ ] **Verification:** Modify the cron schedule temporarily to run every minute (`* * * * *`). Create a mock code submission. Wait 1 minute. Verify in the database that `aiFeedback` is populated. Revert cron schedule to 2:00 AM.

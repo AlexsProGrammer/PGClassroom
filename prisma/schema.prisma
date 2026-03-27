@@ -12,24 +12,62 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  STUDENT
+  EDITOR
+  TEACHER
+}
+
+enum AssignmentType {
+  CODE
+  QUIZ
+  UPLOAD
+}
+
+enum SubmissionStatus {
+  PENDING
+  RUNNING
+  ACCEPTED
+  WRONG_ANSWER
+  RUNTIME_ERROR
+  COMPILATION_ERROR
+  MANUALLY_GRADED
+  AI_GRADED
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  password  String
+  role      Role     @default(STUDENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Assignment {
-  id              Int          @id @default(autoincrement())
+  id              Int            @id @default(autoincrement())
   title           String
   description     String
   language        String
   languageVersion String
   expected_output String
+  type            AssignmentType @default(CODE)
+  config          Json?
   submissions     Submission[]
 }
 
 model Submission {
-  id              Int        @id @default(autoincrement())
-  assignmentId    Int
-  code            String
-  status          String
-  stdout          String?
-  stderr          String?
-  compile_output  String?
-  runCode         Int?
-  assignment      Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  id             Int              @id @default(autoincrement())
+  assignmentId   Int
+  code           String
+  status         SubmissionStatus @default(PENDING)
+  stdout         String?
+  stderr         String?
+  compile_output String?
+  runCode        Int?
+  points         Int?
+  tutorFeedback  String?
+  aiFeedback     String?
+  assignment     Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
 }

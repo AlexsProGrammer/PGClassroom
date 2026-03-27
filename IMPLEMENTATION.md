@@ -58,11 +58,11 @@
 - [x] **Verification:** Create three mock assignments in the DB (one CODE, one QUIZ, one FILE_UPLOAD). Navigate to their respective URLs as a student and verify the UI dynamically shifts from a code editor to a quiz form to an upload dropzone.
 
 #### Phase 4: Advanced Grading UI (Admin View)
-- [ ] **Step 4.1:** Overhaul `src/app/(admin)/admin/grading/page.tsx`. Use the `shadcn` `<Table>` component to list all Submissions. Add columns for Student Name, Assignment Title, Status (Badge: Pending/Graded), and an "Action" button linking to the specific submission.
-- [ ] **Step 4.2:** Create `src/app/(admin)/admin/grading/[submissionId]/page.tsx`. Implement a CSS Grid/Flexbox split-screen layout (`grid-cols-3` or `grid-cols-4`).
-- [ ] **Step 4.3:** Left side (Content View): Dynamically render the submission content. If CODE, show a read-only Monaco editor. If QUIZ, render the questions and the student's selected answers. If UPLOAD, provide a button to download/view the file via the `/api/files/` route.
-- [ ] **Step 4.4:** Right side (Grading Panel): Implement a sticky `<Card>` with an `<Input type="number">` for Points, a `<Textarea>` for Tutor Feedback, and a "Save & Mark as Graded" button that updates the submission via a server action or API call. Display `aiFeedback` here if it exists.
-- [ ] **Verification:** Log in as an EDITOR. Navigate to `/admin/grading`. Click on a pending submission. Verify the split-screen layout renders the correct content on the left and successfully saves points/feedback on the right.
+- [x] **Step 4.1:** Overhaul `src/app/(admin)/admin/grading/page.tsx`. Use the `shadcn` `<Table>` component to list all Submissions. Add columns for Student Name, Assignment Title, Status (Badge: Pending/Graded), and an "Action" button linking to the specific submission.
+- [x] **Step 4.2:** Create `src/app/(admin)/admin/grading/[submissionId]/page.tsx`. Implement a CSS Grid/Flexbox split-screen layout (`grid-cols-3` or `grid-cols-4`).
+- [x] **Step 4.3:** Left side (Content View): Dynamically render the submission content. If CODE, show a read-only Monaco editor. If QUIZ, render the questions and the student's selected answers. If UPLOAD, provide a button to download/view the file via the `/api/files/` route.
+- [x] **Step 4.4:** Right side (Grading Panel): Implement a sticky `<Card>` with an `<Input type="number">` for Points, a `<Textarea>` for Tutor Feedback, and a "Save & Mark as Graded" button that updates the submission via a server action or API call. Display `aiFeedback` here if it exists.
+- [x] **Verification:** Log in as an EDITOR. Navigate to `/admin/grading`. Click on a pending submission. Verify the split-screen layout renders the correct content on the left and successfully saves points/feedback on the right.
 
 #### Phase 5: Settings & Profile Management
 - [ ] **Step 5.1:** Create `src/app/(admin)/admin/settings/page.tsx` and `src/app/(student)/student/settings/page.tsx` (or share a common component).

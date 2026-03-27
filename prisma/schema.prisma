@@ -36,13 +36,14 @@ enum SubmissionStatus {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String?
-  password  String
-  role      Role     @default(STUDENT)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          Int          @id @default(autoincrement())
+  email       String       @unique
+  name        String?
+  password    String
+  role        Role         @default(STUDENT)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  submissions Submission[]
 }
 
 model Assignment {
@@ -60,7 +61,9 @@ model Assignment {
 model Submission {
   id             Int              @id @default(autoincrement())
   assignmentId   Int
+  userId         Int?
   code           String
+  filePath       String?
   status         SubmissionStatus @default(PENDING)
   stdout         String?
   stderr         String?
@@ -70,4 +73,8 @@ model Submission {
   tutorFeedback  String?
   aiFeedback     String?
   assignment     Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  user           User?            @relation(fields: [userId], references: [id])
+
+  @@unique([assignmentId, userId])
 }
+

@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## 0.6.0 - 2026-03-27
+
+- Added `userId` (optional FK to User) and `filePath` fields to `Submission` model with `@@unique([assignmentId, userId])` compound constraint.
+- Added `submissions` relation on `User` model.
+- Created `src/app/api/upload/route.ts`: multipart/form-data upload endpoint for PDF files with auth, assignment type validation, PDF magic byte verification, and 10 MB size limit. Files stored at `src/uploads/[assignmentId]/[userId].pdf`.
+- Created `src/app/api/files/[...path]/route.ts`: authenticated file-serving route with path traversal protection for viewing uploaded PDFs.
+- Created `src/app/api/grading/[assignmentId]/route.ts`: GET fetches assignment + all submissions (with user info); PATCH grades a submission (sets points, tutorFeedback, status → MANUALLY_GRADED). Restricted to EDITOR/TEACHER roles.
+- Built grading UI at `src/app/(admin)/admin/grading/[assignmentId]/page.tsx`: sidebar listing pending/graded submissions, split-screen view with PDF iframe or code display on left, grading form on right.
+- Verified: logged in as TEACHER, graded submission #1 with 95 points, DB confirmed `status=MANUALLY_GRADED`.
+
 ## 0.5.0 - 2026-03-27
 
 - Added Redis container to `docker-compose.yml` for BullMQ queue backend.

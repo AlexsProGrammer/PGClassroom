@@ -48,10 +48,10 @@
 - [x] **Verification:** Send 10 concurrent requests to `/api/execute` via a test script. Verify that the VM CPU does not spike dangerously and the worker processes exactly 3 jobs at a time.
 
 #### Phase 3: File Uploads & Manual Grading UI
-- [ ] **Step 3.1:** Create `src/app/api/upload/route.ts` to handle `multipart/form-data`. Save PDF files securely to `./src/uploads/[assignmentId]/[userId].pdf`. Save the path in the `Submission` Prisma record.
-- [ ] **Step 3.2:** Build the Grading UI at `src/app/(admin)/admin/grading/[assignmentId]/page.tsx`. Fetch all `PENDING` submissions.
-- [ ] **Step 3.3:** Implement a split-screen UI: Left side uses `<iframe src="/api/files/[path]">` to show the PDF or a Monaco editor for code. Right side contains a form for `Points` and `Tutor Feedback`.
-- [ ] **Verification:** Log in as `TEACHER`. Navigate to the grading UI, assign points to a mock submission, and verify the DB updates the status to `MANUALLY_GRADED`.
+- [x] **Step 3.1:** Create `src/app/api/upload/route.ts` to handle `multipart/form-data`. Save PDF files securely to `./src/uploads/[assignmentId]/[userId].pdf`. Save the path in the `Submission` Prisma record.
+- [x] **Step 3.2:** Build the Grading UI at `src/app/(admin)/admin/grading/[assignmentId]/page.tsx`. Fetch all `PENDING` submissions.
+- [x] **Step 3.3:** Implement a split-screen UI: Left side uses `<iframe src="/api/files/[path]">` to show the PDF or a Monaco editor for code. Right side contains a form for `Points` and `Tutor Feedback`.
+- [x] **Verification:** Log in as `TEACHER`. Navigate to the grading UI, assign points to a mock submission, and verify the DB updates the status to `MANUALLY_GRADED`.
 
 #### Phase 4: Nightly AI Batch Processor (Gemma 2B)
 - [ ] **Step 4.1:** Add `ollama` to `docker-compose.yml` (Image: `ollama/ollama`). Ensure a volume is mounted for model storage. Set environment variable `OLLAMA_KEEP_ALIVE=5m`.
